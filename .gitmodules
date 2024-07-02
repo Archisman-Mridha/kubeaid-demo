@@ -1,0 +1,7 @@
+[submodule "kubeaid"]
+	path = kubeaid
+	url = git@github.com:Archisman-Mridha/kubeaid.git
+
+[submodule "kubeaid-config"]
+	path = kubeaid-config
+	url = git@github.com:Archisman-Mridha/kubeaid-config.git
