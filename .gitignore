@@ -1,0 +1,3 @@
+export-aws-credentials.sh
+management-cluster/capi-cluster-token.secret.yaml
+main-cluster/kubeconfig.yaml

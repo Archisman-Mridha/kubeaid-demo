@@ -13,7 +13,11 @@ helm install argocd argo/argo-cd \
   --namespace argocd --create-namespace \
   --set notification.enabled=false --set dex.enabled=false
 
-brew install clusterawsadm
+# Install clusterawsadm.
+# brew install clusterawsadm
+wget https://github.com/kubernetes-sigs/cluster-api-provider-aws/releases/download/v2.5.2/clusterawsadm_v2.5.2_linux_amd64
+sudo mv clusterawsadm_v2.5.2_linux_amd64 /usr/local/bin/clusterawsadm
+sudo chmod +x /usr/local/bin/clusterawsadm
 
 # Create Kubernetes Secret required by the Infrastructure provider.
 
@@ -49,3 +53,10 @@ kubectl port-forward svc/argocd-server -n argocd 8080:443
 
 # Bootstrap the main cluster.
 kubectl apply -f ./management-cluster/capi-cluster.app.yaml
+
+# Install clusterctl.
+curl -L https://github.com/kubernetes-sigs/cluster-api/releases/download/v1.7.3/clusterctl-linux-amd64 -o clusterctl
+sudo install -o root -g root -m 0755 clusterctl /usr/local/bin/clusterctl
+
+# Get kubeconfig of the provisioned cluster.
+clusterctl get kubeconfig test.cluster.com -n capi-cluster-kubeaid-demo > ./main-cluster/kubeconfig.yaml
