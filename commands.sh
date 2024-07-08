@@ -14,17 +14,18 @@ helm install argocd argo/argo-cd \
   --set notification.enabled=false --set dex.enabled=false
 
 # Install clusterawsadm.
-# brew install clusterawsadm
 wget https://github.com/kubernetes-sigs/cluster-api-provider-aws/releases/download/v2.5.2/clusterawsadm_v2.5.2_linux_amd64
 sudo mv clusterawsadm_v2.5.2_linux_amd64 /usr/local/bin/clusterawsadm
 sudo chmod +x /usr/local/bin/clusterawsadm
 
-# Create Kubernetes Secret required by the Infrastructure provider.
+# Create Kubernetes Secret required by the AWS Infrastructure Provider (CAPA Controller Manager). It
+# should exist in the same namespace where the AWS Infrastructure Provider will be deployed.
 
-  export CUSTOMERID=
-  export AWS_REGION=
-  export AWS_ACCESS_KEY_ID=
-  export AWS_SECRET_ACCESS_KEY=
+  # You must have your AWS credentials exported as environment variables.
+  # export CUSTOMERID=
+  # export AWS_REGION=
+  # export AWS_ACCESS_KEY_ID=
+  # export AWS_SECRET_ACCESS_KEY=
 
   export AWS_B64ENCODED_CREDENTIALS=$(clusterawsadm bootstrap credentials encode-as-profile)
 
@@ -51,8 +52,17 @@ kubectl apply -f ./management-cluster/cluster-api.app.yaml
 kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d
 kubectl port-forward svc/argocd-server -n argocd 8080:443
 
-# Bootstrap the main cluster.
+# Bootstrapping the main cluster.
+#
+# (1) Create the CAPI Cluster ArgoCD app in your management cluster.
 kubectl apply -f ./management-cluster/capi-cluster.app.yaml
+#
+# (2) Go to the ArgoCD admin dashboard and first sync the Infrastructure Provider resource, so that
+#     the required AWS cloud provider specific CRDs (like AWSCluster and AWSMachinePool) get
+#     installed. Then, sync the whole Cluster API ArgoCD app.
+#
+# (3) Observe logs of the capa-controller-manager pod in the capi-cluster-kubeaid-demo namespace.
+#     You'll see logs about the infrastructure creation and reconcilation.
 
 # Install clusterctl.
 curl -L https://github.com/kubernetes-sigs/cluster-api/releases/download/v1.7.3/clusterctl-linux-amd64 -o clusterctl
