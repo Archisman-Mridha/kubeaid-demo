@@ -9,8 +9,8 @@ kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/
 
 # Install ArgoCD.
 helm repo add argo https://argoproj.github.io/argo-helm
-helm install argocd argo/argo-cd \
-  --namespace argocd --create-namespace \
+helm install argo-cd argo/argo-cd \
+  --namespace argo-cd --create-namespace \
   --set notification.enabled=false --set dex.enabled=false
 
 # Install clusterawsadm.
@@ -26,6 +26,10 @@ sudo chmod +x /usr/local/bin/clusterawsadm
   # export AWS_REGION=
   # export AWS_ACCESS_KEY_ID=
   # export AWS_SECRET_ACCESS_KEY=
+
+	# The clusterawsadm utility takes the credentials that you set as environment variables and uses
+	# them to create a CloudFormation stack in your AWS account with the correct IAM resources.
+	clusterawsadm bootstrap iam create-cloudformation-stack
 
   export AWS_B64ENCODED_CREDENTIALS=$(clusterawsadm bootstrap credentials encode-as-profile)
 
@@ -49,8 +53,8 @@ sudo chmod +x /usr/local/bin/clusterawsadm
 kubectl apply -f ./management-cluster/cluster-api.app.yaml
 #
 # (3) Login to the ArgoCD admin dashboard and sync the Cluster API ArgoCD app.
-kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d
-kubectl port-forward svc/argocd-server -n argocd 8080:443
+kubectl -n argo-cd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d
+kubectl port-forward svc/argo-cd-argocd-server -n argo-cd 8080:443
 
 # Bootstrapping the main cluster.
 #
@@ -59,7 +63,7 @@ kubectl apply -f ./management-cluster/capi-cluster.app.yaml
 #
 # (2) Go to the ArgoCD admin dashboard and first sync the Infrastructure Provider resource, so that
 #     the required AWS cloud provider specific CRDs (like AWSCluster and AWSMachinePool) get
-#     installed. Then, sync the whole Cluster API ArgoCD app.
+#     installed. Then, sync the whole CAPI Cluster ArgoCD app.
 #
 # (3) Observe logs of the capa-controller-manager pod in the capi-cluster-kubeaid-demo namespace.
 #     You'll see logs about the infrastructure creation and reconcilation.
@@ -69,4 +73,5 @@ curl -L https://github.com/kubernetes-sigs/cluster-api/releases/download/v1.7.3/
 sudo install -o root -g root -m 0755 clusterctl /usr/local/bin/clusterctl
 
 # Get kubeconfig of the provisioned cluster.
+mkdir -p ./main-cluster
 clusterctl get kubeconfig test.cluster.com -n capi-cluster-kubeaid-demo > ./main-cluster/kubeconfig.yaml

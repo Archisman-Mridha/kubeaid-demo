@@ -1,0 +1,21 @@
+---
+# Source: root/templates/root.yaml
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: root
+  namespace: argo-cd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: argo-cd
+  project: default
+  source:
+    path: k8s/test.cluster.com/argocd-apps
+    repoURL: https://github.com/Archisman-Mridha/kubeaid-config.git
+    targetRevision: HEAD
+  syncPolicy:
+    syncOptions:
+      - ApplyOutOfSyncOnly=true

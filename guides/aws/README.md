@@ -23,6 +23,70 @@ KUBECONFIG=./main-cluster/kubeconfig.yaml k9s
 
 > One thing you may notice is the `AWS Cloud Controller Manager (aws-ccm)` pod is running in the `kube-system` namespace instead of the `aws` namepsace. This is mandatory!
 
+## Solving the DNS issue in the provisioned cluster
+
+> Following https://kubernetes.io/docs/tasks/administer-cluster/dns-debugging-resolution/.
+> I also removed the Cilium kube-proxyless mode to be sure that it wasn't the reason behind.
+
+I launched a utility pod and shelled into it :
+
+```sh
+kubectl create deployment dns-issue-debugger --image=wbitt/network-multitool:latest
+```
+
+> I was able to communicate with `google.com` by executing `ping 8.8.8.8` but not using `ping google.com`.
+
+Got the local DNS configuration using `cat /etc/resolv.conf` :
+
+```conf
+search default.svc.cluster.local svc.cluster.local cluster.local us-east-2.compute.internal
+nameserver 10.96.0.10
+options ndots:5
+```
+
+`nslookup kubernetes.default` was timing out and when I pinged `10.96.0.10` (ClusterIP of the KubeDNS / CoreDNS Service) manually, I didn't receive any response.
+
+Let's try to deploy the utility pod in the same node as CoreDNS and check whether this problem goes away or not. The output for `nslookup kubernetes.default` I got this time is :
+
+```log
+Server:		10.96.0.10
+Address:	10.96.0.10#53
+
+Name:	kubernetes.default.svc.cluster.local
+Address: 10.96.0.1
+```
+
+Everything works fine (even `ping google.com`)!
+
+> So the issue here is : cross node communication!
+> Workloads run on worker nodes. Now, to resolve a DNS hostname, a pod in the worker node tries to communicate with CoreDNS (which is running in the control node). And this communication fails.
+
+Let's get outside Kubernetes and try to communicate with a control-plane node from a worker node.
+
+```sh
+# SSH into the Bastian.
+scp -i kubeaid-demo.pem ./kubeaid-demo.pem ubuntu@3.146.107.141:/home/ubuntu/kubeaid-demo.pem
+ssh -i ./kubeaid-demo.pem ubuntu@3.146.107.141
+
+# SSH into a worker node.
+scp -i kubeaid-demo.pem ./kubeaid-demo.pem ubuntu@10.14.1.139:/home/ubuntu/kubeaid-demo.pem
+ssh -i kubeaid-demo.pem ubuntu@10.14.1.139
+
+# Try to SSH into the control-plane node.
+ssh -i kubeaid-demo.pem ubuntu@10.14.0.48 # The SSH fails. However I can see that there is a
+																					# Security Group attached, which allows inbound SSH
+																					# connections to port 22.
+```
+
+> https://serverfault.com/questions/483938/multiple-ec2-security-groups-permissive-or-restrictive
+
+## Dogfooding ClusterAPI
+
+```sh
+helm template ../../kubeaid-config/k8s/test.cluster.com/argocd-apps > ./main-cluster/root.app.argocd.yaml
+KUBECONFIG=./main-cluster/kubeconfig.yaml kubectl apply -f ./main-cluster/root.app.argocd.yaml
+```
+
 ## Upgrading the cluster
 
 > Currently, there are no community maintained AMIs for Kubernetes versions higher than v1.28.3. So, we'll try to downgrade the cluster.
@@ -68,3 +132,5 @@ and checking the `Kubernetes server version`.
 - [Criterias for a Cluster Infrastructure Provider](https://release-0-3.cluster-api.sigs.k8s.io/developer/providers/cluster-infrastructure)
 
 - [Can we ignore a template to be rendered but create the manifest as it is](https://github.com/helm/helm/issues/9667)
+
+- [Debugging DNS Resolution](https://kubernetes.io/docs/tasks/administer-cluster/dns-debugging-resolution/)
