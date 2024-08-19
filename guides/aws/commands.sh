@@ -29,6 +29,7 @@ sudo chmod +x /usr/local/bin/clusterawsadm
 
 	# The clusterawsadm utility takes the credentials that you set as environment variables and uses
 	# them to create a CloudFormation stack in your AWS account with the correct IAM resources.
+	# NOTE : This requires admin privileges.
 	clusterawsadm bootstrap iam create-cloudformation-stack
 
   export AWS_B64ENCODED_CREDENTIALS=$(clusterawsadm bootstrap credentials encode-as-profile)

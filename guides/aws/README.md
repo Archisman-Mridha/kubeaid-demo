@@ -7,6 +7,7 @@
 Fork the [KubeAid](https://github.com/Obmondo/kubeaid) and [KubeAid config](https://github.com/Obmondo/kubeaid-config) repos. Here are my forks - https://github.com/Archisman-Mridha/kubeaid and https://github.com/Archisman-Mridha/kubeaid-config.
 
 Next, export your AWS credentials as environment variables :
+
 ```sh
 export CUSTOMERID=
 export AWS_REGION=
@@ -17,68 +18,12 @@ export AWS_SECRET_ACCESS_KEY=
 Next, create an AWS Keypair named `kubeaid-demo` in the `us-east-2` region. Here is the link to the documentation - https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/create-key-pairs.html.
 
 Then execute the commands specified in [commands.sh](./commands.sh) file. Once the main cluster is provisioned, go ahead and use K9s to explore it :
+
 ```sh
 KUBECONFIG=./main-cluster/kubeconfig.yaml k9s
 ```
 
 > One thing you may notice is the `AWS Cloud Controller Manager (aws-ccm)` pod is running in the `kube-system` namespace instead of the `aws` namepsace. This is mandatory!
-
-## Solving the DNS issue in the provisioned cluster
-
-> Following https://kubernetes.io/docs/tasks/administer-cluster/dns-debugging-resolution/.
-> I also removed the Cilium kube-proxyless mode to be sure that it wasn't the reason behind.
-
-I launched a utility pod and shelled into it :
-
-```sh
-kubectl create deployment dns-issue-debugger --image=wbitt/network-multitool:latest
-```
-
-> I was able to communicate with `google.com` by executing `ping 8.8.8.8` but not using `ping google.com`.
-
-Got the local DNS configuration using `cat /etc/resolv.conf` :
-
-```conf
-search default.svc.cluster.local svc.cluster.local cluster.local us-east-2.compute.internal
-nameserver 10.96.0.10
-options ndots:5
-```
-
-`nslookup kubernetes.default` was timing out and when I pinged `10.96.0.10` (ClusterIP of the KubeDNS / CoreDNS Service) manually, I didn't receive any response.
-
-Let's try to deploy the utility pod in the same node as CoreDNS and check whether this problem goes away or not. The output for `nslookup kubernetes.default` I got this time is :
-
-```log
-Server:		10.96.0.10
-Address:	10.96.0.10#53
-
-Name:	kubernetes.default.svc.cluster.local
-Address: 10.96.0.1
-```
-
-Everything works fine (even `ping google.com`)!
-
-> So the issue here is : cross node communication!
-> Workloads run on worker nodes. Now, to resolve a DNS hostname, a pod in the worker node tries to communicate with CoreDNS (which is running in the control node). And this communication fails.
-
-Let's get outside Kubernetes and try to communicate with a control-plane node from a worker node.
-
-```sh
-# SSH into the Bastian.
-scp -i kubeaid-demo.pem ./kubeaid-demo.pem ubuntu@3.146.107.141:/home/ubuntu/kubeaid-demo.pem
-ssh -i ./kubeaid-demo.pem ubuntu@3.146.107.141
-
-# SSH into a worker node.
-scp -i kubeaid-demo.pem ./kubeaid-demo.pem ubuntu@10.14.1.139:/home/ubuntu/kubeaid-demo.pem
-ssh -i kubeaid-demo.pem ubuntu@10.14.1.139
-
-# Try to SSH into the control-plane node.
-ssh -i kubeaid-demo.pem ubuntu@10.14.0.48 # The SSH fails. However I can see that there is a
-																					# Security Group attached, which allows inbound SSH
-																					# connections to port 22.
-```
-
-> https://serverfault.com/questions/483938/multiple-ec2-security-groups-permissive-or-restrictive
 
 ## Dogfooding ClusterAPI
 
@@ -100,9 +45,11 @@ Let's say, you want to downgrade the Kubernetes version of the main cluster from
 - Observe the logs of the `capa-controller-manager` pod in the `capi-cluster-kubeaid-demo` namespace. You'll see the existing EC2 instances getting terminated and new EC2 instances coming up.
 
 You can verify the downgrade by executing :
+
 ```sh
 KUBECONFIG=./main-cluster/kubeconfig.yaml kubectl version
 ```
+
 and checking the `Kubernetes server version`.
 
 ## TODOS
