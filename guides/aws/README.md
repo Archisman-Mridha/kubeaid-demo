@@ -25,6 +25,20 @@ KUBECONFIG=./main-cluster/kubeconfig.yaml k9s
 
 > One thing you may notice is the `AWS Cloud Controller Manager (aws-ccm)` pod is running in the `kube-system` namespace instead of the `aws` namepsace. This is mandatory!
 
+## Backup ClusterAPI Files
+
+Before proceeding with `Dogfooding ClusterAPI`, execute this command :
+
+```sh
+mkdir ./management-cluster/clusterapi-backup
+clusterctl move -n capi-cluster-kubeaid-demo \
+	--to-directory ./management-cluster/clusterapi-backup
+```
+
+and take a backup of your ClusterAPI related files.
+
+Let's say you dogfood ClusterAPI. Then somehow seriously mess up the CNI plugin due to which pod-to-pod communication gets disrupted. These backup files will come to rescue then!
+
 ## Dogfooding ClusterAPI
 
 We'll make the provisioned cluster manage itself, so there'll be no need for the management cluster.
@@ -85,13 +99,11 @@ and checking the `Kubernetes server version`.
 
 ## TODOS
 
+- [x] Dogfooding - let the main cluster manage itself, so we don't need the management cluster once the main cluster is provisioned.
+- [ ] Build and publish our own AMIs. Currently, there are no community maintained AMIs for ARM machines and Kubernetes versions above v1.28.3.
+- [ ] Check whether we can directly upgrade the Kubernetes cluster from v1.27 to 1.30.
 - [ ] Deploy a sample stateful and stateless application.
 - [ ] Test node autoscaling by load testing.
-- [ ] Build and publish our own AMIs. Currently, there are no community maintained AMIs for Kubernetes versions above v1.28.3 / ARM machines.
-- [x] Dogfooding - let the main cluster manage itself, so we don't need the management cluster once the main cluster is provisioned.
-- [ ] Fix : hubble-relay pod is failing with error - `Failed to create peer client for peers synchronization`.
-- [ ] Deploy a bw7 cluster using Cluster Api (next week).
-- [ ] Check whether we can directly upgrade the Kubernetes cluster from v1.28.3 to v1.29.1.
 
 ## REFERENCES
 
@@ -114,3 +126,5 @@ and checking the `Kubernetes server version`.
 - [Debugging DNS Resolution](https://kubernetes.io/docs/tasks/administer-cluster/dns-debugging-resolution/)
 
 - [clusterctl move command](https://cluster-api.sigs.k8s.io/clusterctl/commands/move)
+
+- [Cilium netkit: The Final Frontier in Container Networking Performance](https://isovalent.com/blog/post/cilium-netkit-a-new-container-networking-paradigm-for-the-ai-era/)
