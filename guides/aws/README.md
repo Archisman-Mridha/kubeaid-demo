@@ -30,7 +30,7 @@ KUBECONFIG=./main-cluster/kubeconfig.yaml k9s
 Before proceeding with `Dogfooding ClusterAPI`, execute this command :
 
 ```sh
-mkdir ./management-cluster/clusterapi-backup
+mkdir -p ./management-cluster/clusterapi-backup
 clusterctl move -n capi-cluster-kubeaid-demo \
 	--to-directory ./management-cluster/clusterapi-backup
 ```

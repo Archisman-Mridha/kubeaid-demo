@@ -1,3 +1,4 @@
 export-aws-credentials.sh
 *.secret.yaml
 kubeconfig.yaml
+clusterapi-backup/
