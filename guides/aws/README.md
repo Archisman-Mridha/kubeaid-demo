@@ -27,10 +27,41 @@ KUBECONFIG=./main-cluster/kubeconfig.yaml k9s
 
 ## Dogfooding ClusterAPI
 
-```sh
-helm template ../../kubeaid-config/k8s/test.cluster.com/argocd-apps > ./main-cluster/root.app.argocd.yaml
-KUBECONFIG=./main-cluster/kubeconfig.yaml kubectl apply -f ./main-cluster/root.app.argocd.yaml
-```
+We'll make the provisioned cluster manage itself, so there'll be no need for the management cluster.
+
+1. Create a Sealed Secret (in your kubeaid-config) out of `./management-cluster/capi-cluster-token.secret.yaml` using this command :
+
+   ```sh
+   KUBECONFIG=./main-cluster/kubeconfig.yaml \
+   	kubeseal -f ./management-cluster/capi-cluster-token.secret.yaml \
+   	-w ../../kubeaid-config/k8s/test.cluster.com/sealed-secrets/capi-cluster-kubeaid-demo/capi-cluster-token.sealed-secret.yaml \
+   	--controller-name sealed-secrets --controller-namespace system
+   ```
+
+   Commit and push the change.
+
+2. Create the root ArgoCD app in the main cluster :
+
+   ```sh
+   helm template ../../kubeaid-config/k8s/test.cluster.com/argocd-apps > ./main-cluster/root.app.argocd.yaml
+   KUBECONFIG=./main-cluster/kubeconfig.yaml kubectl apply -f ./main-cluster/root.app.argocd.yaml
+   ```
+
+3. Create the `capi-cluster-kubeaid-demo` namespace in the main cluster :
+
+   ```sh
+   KUBECONFIG=./main-cluster/kubeconfig.yaml kubectl create namespace capi-cluster-kubeaid-demo
+   ```
+
+4. Then sync the `root`, `Sealed Secrets` and `Cluster API` ArgoCD apps. Sync the `InfrastructureProvider` resource of the `CAPI Cluster` ArgoCD app.
+
+5. Then move the Cluster API resources from the management to the main cluster :
+
+   ```sh
+   clusterctl move --to-kubeconfig=./main-cluster/kubeconfig.yaml -n capi-cluster-kubeaid-demo
+   ```
+
+And done....!
 
 ## Upgrading the cluster
 
@@ -57,7 +88,7 @@ and checking the `Kubernetes server version`.
 - [ ] Deploy a sample stateful and stateless application.
 - [ ] Test node autoscaling by load testing.
 - [ ] Build and publish our own AMIs. Currently, there are no community maintained AMIs for Kubernetes versions above v1.28.3 / ARM machines.
-- [ ] Dogfooding - let the main cluster manage itself, so we don't need the management cluster once the main cluster is provisioned.
+- [x] Dogfooding - let the main cluster manage itself, so we don't need the management cluster once the main cluster is provisioned.
 - [ ] Fix : hubble-relay pod is failing with error - `Failed to create peer client for peers synchronization`.
 - [ ] Deploy a bw7 cluster using Cluster Api (next week).
 - [ ] Check whether we can directly upgrade the Kubernetes cluster from v1.28.3 to v1.29.1.
@@ -81,3 +112,5 @@ and checking the `Kubernetes server version`.
 - [Can we ignore a template to be rendered but create the manifest as it is](https://github.com/helm/helm/issues/9667)
 
 - [Debugging DNS Resolution](https://kubernetes.io/docs/tasks/administer-cluster/dns-debugging-resolution/)
+
+- [clusterctl move command](https://cluster-api.sigs.k8s.io/clusterctl/commands/move)
