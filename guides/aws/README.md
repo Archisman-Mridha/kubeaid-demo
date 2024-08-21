@@ -2,6 +2,61 @@
 
 > KubeAid is a Kubernetes management suite, offering a way to setup and operate K8s clusters, following gitops and automation principles.
 
+## Building and using custom ARM64 based Ubuntu 24.04 AMI
+
+> Currently, there are no community maintained AMIs for ARM based machines and Kubernetes versions higher than v1.28.3.
+
+1.  Setup a VPC where the AMI will be built. Cd into `./terraform` and create a `terraform.tfvars` file with appropriate Terraform variables set. You can find an example terraform.tfvars files at `./terraform/terraform.tfvars.example`. Then execute :
+
+    ```sh
+    terraform init
+    terraform plan
+    terraform apply
+    ```
+
+    Once done, you'll see the VPC and Subnet ids in the output. Note them down.
+
+2.  From the root of this repository, cd into `image-builder`. Make sure you have the prerequisites (mentioned [here](https://image-builder.sigs.k8s.io/capi/capi.html)) installed in your system, by running :
+
+    ```sh
+    make deps-ami
+    ```
+
+3.  We'll be using `image-builder/images/capi/packer/ami/packer.json` along with `image-builder/images/capi/packer/ami/ubuntu-2404-arm64.json`. You can adjust the `image-builder/images/capi/packer/ami/ubuntu-2404-arm64.json` file according to your needs.
+
+    For example, if you want to publicly share the AMI, then set `ami_groups: all` in `image-builder/images/capi/packer/ami/ubuntu-2404-arm64.json`.
+
+    > To publicly share the image, you must call the DisableImageBlockPublicAccess API.
+
+    Then cd into `image-builder/images/capi` and run :
+
+    ```sh
+    make build-ami-ubuntu-2404-arm64
+    ```
+
+    You can view the AMI ID somewhere in the output.
+
+    > For me : `ami-08e125d5e51f9a5e6` is the AMI for Kubernetes v1.28.0 and `ami-07363ceb2bd8ec795` is the AMI for Kubernetes v1.31.0.
+
+In the output, you'll also see these error logs, which you can ignore :
+
+```log
+==> amazon-ebs.ubuntu-24.04-arm64: Running goss tests...
+
+==> amazon-ebs.ubuntu-24.04-arm64: Running GOSS render command: cd /tmp/goss && /tmp/goss-0.3.16-linux-arm64 --gossfile goss/goss.yaml --vars /tmp/goss/goss-vars.yaml --vars-inline '{"ARCH":"arm64","OS":"ubuntu","OS_VERSION":"24.04","PROVIDER":"amazon","containerd_version":"1.7.13","kubernetes_cni_deb_version":"","kubernetes_cni_rpm_version":"","kubernetes_cni_source_type":"pkg","kubernetes_cni_version":"1.2.0","kubernetes_deb_version":"1.29.7-1.1","kubernetes_rpm_version":"1.29.7","kubernetes_source_type":"pkg","kubernetes_version":"1.31.0"}' render > /tmp/goss-spec.yaml
+==> amazon-ebs.ubuntu-24.04-arm64: /tmp/goss-0.3.16-linux-arm64: line 1: Not: command not found
+==> amazon-ebs.ubuntu-24.04-arm64: Goss render failed
+==> amazon-ebs.ubuntu-24.04-arm64: Inspect mode on : proceeding without failing Packer
+==> amazon-ebs.ubuntu-24.04-arm64: Running GOSS render debug command: cd /tmp/goss && /tmp/goss-0.3.16-linux-arm64 --gossfile goss/goss.yaml --vars /tmp/goss/goss-vars.yaml --vars-inline '{"ARCH":"arm64","OS":"ubuntu","OS_VERSION":"24.04","PROVIDER":"amazon","containerd_version":"1.7.13","kubernetes_cni_deb_version":"","kubernetes_cni_rpm_version":"","kubernetes_cni_source_type":"pkg","kubernetes_cni_version":"1.2.0","kubernetes_deb_version":"1.29.7-1.1","kubernetes_rpm_version":"1.29.7","kubernetes_source_type":"pkg","kubernetes_version":"1.31.0"}' render -d > /tmp/debug-goss-spec.yaml
+==> amazon-ebs.ubuntu-24.04-arm64: /tmp/goss-0.3.16-linux-arm64: line 1: Not: command not found
+==> amazon-ebs.ubuntu-24.04-arm64: Goss render debug failed
+==> amazon-ebs.ubuntu-24.04-arm64: Inspect mode on : proceeding without failing Packer
+==> amazon-ebs.ubuntu-24.04-arm64: Running GOSS validate command: cd /tmp/goss && sudo /tmp/goss-0.3.16-linux-arm64 --gossfile goss/goss.yaml --vars /tmp/goss/goss-vars.yaml --vars-inline '{"ARCH":"arm64","OS":"ubuntu","OS_VERSION":"24.04","PROVIDER":"amazon","containerd_version":"1.7.13","kubernetes_cni_deb_version":"","kubernetes_cni_rpm_version":"","kubernetes_cni_source_type":"pkg","kubernetes_cni_version":"1.2.0","kubernetes_deb_version":"1.29.7-1.1","kubernetes_rpm_version":"1.29.7","kubernetes_source_type":"pkg","kubernetes_version":"1.31.0"}' validate --retry-timeout 0s --sleep 1s -f json -o pretty
+==> amazon-ebs.ubuntu-24.04-arm64: /tmp/goss-0.3.16-linux-arm64: 1: Not: not found
+==> amazon-ebs.ubuntu-24.04-arm64: Goss validate failed
+==> amazon-ebs.ubuntu-24.04-arm64: Inspect mode on : proceeding without failing Packer
+```
+
 ## Provisioning a cluster
 
 Fork the [KubeAid](https://github.com/Obmondo/kubeaid) and [KubeAid config](https://github.com/Obmondo/kubeaid-config) repos. Here are my forks - https://github.com/Archisman-Mridha/kubeaid and https://github.com/Archisman-Mridha/kubeaid-config.
@@ -79,17 +134,15 @@ And done....!
 
 ## Upgrading the cluster
 
-> Currently, there are no community maintained AMIs for Kubernetes versions higher than v1.28.3. So, we'll try to downgrade the cluster.
+You'll notice currently we're running Kubernetes v1.28.0. We'll be upgrading the Kubernetes version to v1.31.0.
 
-Let's say, you want to downgrade the Kubernetes version of the main cluster from v1.28.3 to v1.28.2.
-
-- Change the Kubernetes version to v1.28.11 in `k8s/test.cluster.com/argocd-apps/values-capi-cluster.yaml` in your `kubeaid-config` fork. Commit and push that change.
+- Change the Kubernetes version to `v1.31.0` and AMI id to `ami-07363ceb2bd8ec795` in`k8s/test.cluster.com/argocd-apps/values-capi-cluster.yaml`in your`kubeaid-config` fork. Commit and push that change.
 
 - Sync the CAPI Cluster ArgoCD app in ArgoCD dashboard.
 
 - Observe the logs of the `capa-controller-manager` pod in the `capi-cluster-kubeaid-demo` namespace. You'll see the existing EC2 instances getting terminated and new EC2 instances coming up.
 
-You can verify the downgrade by executing :
+You can verify the upgrade by executing :
 
 ```sh
 KUBECONFIG=./main-cluster/kubeconfig.yaml kubectl version
@@ -97,64 +150,13 @@ KUBECONFIG=./main-cluster/kubeconfig.yaml kubectl version
 
 and checking the `Kubernetes server version`.
 
-## Building and using custom ARM64 based Ubuntu 24.04 AMI
-
-1.  Setup a VPC where the AMI will be built. Cd into `./terraform` and create a `terraform.tfvars` file with appropriate Terraform variables set. You can find an example terraform.tfvars files at `./terraform/terraform.tfvars.example`. Then execute :
-
-    ```sh
-    terraform init
-    terraform plan
-    terraform apply
-    ```
-
-    Once done, you'll see the VPC and Subnet ids in the output. Note them down.
-
-2.  From the root of this repository, cd into `image-builder`. Make sure you have the prerequisites (mentioned [here](https://image-builder.sigs.k8s.io/capi/capi.html)) installed in your system, by running :
-
-    ```sh
-    make deps-ami
-    ```
-
-3.  We'll be using `image-builder/images/capi/packer/ami/packer.json` along with `image-builder/images/capi/packer/ami/ubuntu-2404-arm64.json`. You can adjust the `image-builder/images/capi/packer/ami/ubuntu-2404-arm64.json` file according to your needs. Then cd into `image-builder/images/capi` and run :
-
-    ```sh
-    make build-ami-ubuntu-2404-arm64
-    ```
-
-    You can view the AMI ID somewhere in the output.
-
-    > For me : `ami-07363ceb2bd8ec795` is the AMI for Kubernetes v1.31.0 and is the AMI for Kubernetes v1.28.0.
-
-    If you want to publicly share the AMI, then set `ami_groups: all` in `image-builder/images/capi/packer/ami/ubuntu-2404-arm64.json`.
-
-    > To publicly share the image, you must call the DisableImageBlockPublicAccess API.
-
-In the output, you'll also see these error logs, which you can ignore :
-
-```log
-==> amazon-ebs.ubuntu-24.04-arm64: Running goss tests...
-
-==> amazon-ebs.ubuntu-24.04-arm64: Running GOSS render command: cd /tmp/goss && /tmp/goss-0.3.16-linux-arm64 --gossfile goss/goss.yaml --vars /tmp/goss/goss-vars.yaml --vars-inline '{"ARCH":"arm64","OS":"ubuntu","OS_VERSION":"24.04","PROVIDER":"amazon","containerd_version":"1.7.13","kubernetes_cni_deb_version":"","kubernetes_cni_rpm_version":"","kubernetes_cni_source_type":"pkg","kubernetes_cni_version":"1.2.0","kubernetes_deb_version":"1.29.7-1.1","kubernetes_rpm_version":"1.29.7","kubernetes_source_type":"pkg","kubernetes_version":"1.31.0"}' render > /tmp/goss-spec.yaml
-==> amazon-ebs.ubuntu-24.04-arm64: /tmp/goss-0.3.16-linux-arm64: line 1: Not: command not found
-==> amazon-ebs.ubuntu-24.04-arm64: Goss render failed
-==> amazon-ebs.ubuntu-24.04-arm64: Inspect mode on : proceeding without failing Packer
-==> amazon-ebs.ubuntu-24.04-arm64: Running GOSS render debug command: cd /tmp/goss && /tmp/goss-0.3.16-linux-arm64 --gossfile goss/goss.yaml --vars /tmp/goss/goss-vars.yaml --vars-inline '{"ARCH":"arm64","OS":"ubuntu","OS_VERSION":"24.04","PROVIDER":"amazon","containerd_version":"1.7.13","kubernetes_cni_deb_version":"","kubernetes_cni_rpm_version":"","kubernetes_cni_source_type":"pkg","kubernetes_cni_version":"1.2.0","kubernetes_deb_version":"1.29.7-1.1","kubernetes_rpm_version":"1.29.7","kubernetes_source_type":"pkg","kubernetes_version":"1.31.0"}' render -d > /tmp/debug-goss-spec.yaml
-==> amazon-ebs.ubuntu-24.04-arm64: /tmp/goss-0.3.16-linux-arm64: line 1: Not: command not found
-==> amazon-ebs.ubuntu-24.04-arm64: Goss render debug failed
-==> amazon-ebs.ubuntu-24.04-arm64: Inspect mode on : proceeding without failing Packer
-==> amazon-ebs.ubuntu-24.04-arm64: Running GOSS validate command: cd /tmp/goss && sudo /tmp/goss-0.3.16-linux-arm64 --gossfile goss/goss.yaml --vars /tmp/goss/goss-vars.yaml --vars-inline '{"ARCH":"arm64","OS":"ubuntu","OS_VERSION":"24.04","PROVIDER":"amazon","containerd_version":"1.7.13","kubernetes_cni_deb_version":"","kubernetes_cni_rpm_version":"","kubernetes_cni_source_type":"pkg","kubernetes_cni_version":"1.2.0","kubernetes_deb_version":"1.29.7-1.1","kubernetes_rpm_version":"1.29.7","kubernetes_source_type":"pkg","kubernetes_version":"1.31.0"}' validate --retry-timeout 0s --sleep 1s -f json -o pretty
-==> amazon-ebs.ubuntu-24.04-arm64: /tmp/goss-0.3.16-linux-arm64: 1: Not: not found
-==> amazon-ebs.ubuntu-24.04-arm64: Goss validate failed
-==> amazon-ebs.ubuntu-24.04-arm64: Inspect mode on : proceeding without failing Packer
-```
-
 ## TODOS
 
 - [x] Dogfooding - let the main cluster manage itself, so we don't need the management cluster once the main cluster is provisioned.
+
 - [x] Build and publish our own AMIs. Currently, there are no community maintained AMIs for ARM machines and Kubernetes versions above v1.28.3.
-- [ ] Check whether we can directly upgrade the Kubernetes cluster from v1.28.0 to 1.31.0.
-- [ ] Deploy a sample stateful and stateless application.
-- [ ] Test node autoscaling by load testing.
+
+- [x] Check whether we can directly upgrade the Kubernetes cluster from v1.28.0 to 1.31.0.
 
 ## REFERENCES
 
@@ -183,7 +185,3 @@ In the output, you'll also see these error logs, which you can ignore :
 - [Building Images for AWS](https://image-builder.sigs.k8s.io/capi/providers/aws.html)
 
 - [AARCH64 / ARM64 CAPI image build for Ubuntu 22.04](https://github.com/kubernetes-sigs/image-builder/pull/1142)
-
-```
-
-```
