@@ -1,0 +1,8 @@
+args = {
+	region = "us-east-2"
+
+  credentials = {
+    access_key = ""
+    secret_key = ""
+  }
+}

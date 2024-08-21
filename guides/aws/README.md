@@ -97,6 +97,20 @@ KUBECONFIG=./main-cluster/kubeconfig.yaml kubectl version
 
 and checking the `Kubernetes server version`.
 
+## Building and using custom ARM AMIs
+
+From the root of this repository, cd into image-builder. Make sure you have the prerequisites mentioned [here](https://image-builder.sigs.k8s.io/capi/capi.html) installed, by running :
+
+```sh
+make deps-ami
+```
+
+```log
+amazon-ebs.ubuntu-24.04-arm64: TASK [containerd : Copy in containerd config file etc/containerd/config.toml] ***
+amazon-ebs.ubuntu-24.04-arm64: An exception occurred during task execution. To see the full traceback, use -vvv. The error was: ansible.errors.AnsibleFilterError: Version comparison failed: '<' not supported between instances of 'int' and 'str'
+amazon-ebs.ubuntu-24.04-arm64: fatal: [default]: FAILED! => {"changed": false, "msg": "AnsibleFilterError: Version comparison failed: '<' not supported between instances of 'int' and 'str'"}
+```
+
 ## TODOS
 
 - [x] Dogfooding - let the main cluster manage itself, so we don't need the management cluster once the main cluster is provisioned.
@@ -128,3 +142,7 @@ and checking the `Kubernetes server version`.
 - [clusterctl move command](https://cluster-api.sigs.k8s.io/clusterctl/commands/move)
 
 - [Cilium netkit: The Final Frontier in Container Networking Performance](https://isovalent.com/blog/post/cilium-netkit-a-new-container-networking-paradigm-for-the-ai-era/)
+
+- [Building Images for AWS](https://image-builder.sigs.k8s.io/capi/providers/aws.html)
+
+- [AARCH64 / ARM64 CAPI image build for Ubuntu 22.04](https://github.com/kubernetes-sigs/image-builder/pull/1142)

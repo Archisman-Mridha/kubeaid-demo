@@ -2,3 +2,9 @@ export-aws-credentials.sh
 *.secret.yaml
 kubeconfig.yaml
 clusterapi-backup/
+
+terraform.tfvars
+.terraform/
+terraform.tfstate
+terraform.tfstate.backup
+.terraform.tfstate.lock.info
