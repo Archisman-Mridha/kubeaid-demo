@@ -1,10 +1,17 @@
 export-aws-credentials.sh
+
+# Kubernetes
 *.secret.yaml
 kubeconfig.yaml
 clusterapi-backup/
 
+# Terraform
 terraform.tfvars
-.terraform/
+.terraform
 terraform.tfstate
 terraform.tfstate.backup
 .terraform.tfstate.lock.info
+outputs
+
+# Packer
+variables.auto.pkrvars.hcl

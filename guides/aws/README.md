@@ -36,26 +36,7 @@
 
     You can view the AMI ID somewhere in the output.
 
-    > For me : `ami-08e125d5e51f9a5e6` is the AMI for Kubernetes v1.28.0 and `ami-07363ceb2bd8ec795` is the AMI for Kubernetes v1.31.0.
-
-In the output, you'll also see these error logs, which you can ignore :
-
-```log
-==> amazon-ebs.ubuntu-24.04-arm64: Running goss tests...
-
-==> amazon-ebs.ubuntu-24.04-arm64: Running GOSS render command: cd /tmp/goss && /tmp/goss-0.3.16-linux-arm64 --gossfile goss/goss.yaml --vars /tmp/goss/goss-vars.yaml --vars-inline '{"ARCH":"arm64","OS":"ubuntu","OS_VERSION":"24.04","PROVIDER":"amazon","containerd_version":"1.7.13","kubernetes_cni_deb_version":"","kubernetes_cni_rpm_version":"","kubernetes_cni_source_type":"pkg","kubernetes_cni_version":"1.2.0","kubernetes_deb_version":"1.29.7-1.1","kubernetes_rpm_version":"1.29.7","kubernetes_source_type":"pkg","kubernetes_version":"1.31.0"}' render > /tmp/goss-spec.yaml
-==> amazon-ebs.ubuntu-24.04-arm64: /tmp/goss-0.3.16-linux-arm64: line 1: Not: command not found
-==> amazon-ebs.ubuntu-24.04-arm64: Goss render failed
-==> amazon-ebs.ubuntu-24.04-arm64: Inspect mode on : proceeding without failing Packer
-==> amazon-ebs.ubuntu-24.04-arm64: Running GOSS render debug command: cd /tmp/goss && /tmp/goss-0.3.16-linux-arm64 --gossfile goss/goss.yaml --vars /tmp/goss/goss-vars.yaml --vars-inline '{"ARCH":"arm64","OS":"ubuntu","OS_VERSION":"24.04","PROVIDER":"amazon","containerd_version":"1.7.13","kubernetes_cni_deb_version":"","kubernetes_cni_rpm_version":"","kubernetes_cni_source_type":"pkg","kubernetes_cni_version":"1.2.0","kubernetes_deb_version":"1.29.7-1.1","kubernetes_rpm_version":"1.29.7","kubernetes_source_type":"pkg","kubernetes_version":"1.31.0"}' render -d > /tmp/debug-goss-spec.yaml
-==> amazon-ebs.ubuntu-24.04-arm64: /tmp/goss-0.3.16-linux-arm64: line 1: Not: command not found
-==> amazon-ebs.ubuntu-24.04-arm64: Goss render debug failed
-==> amazon-ebs.ubuntu-24.04-arm64: Inspect mode on : proceeding without failing Packer
-==> amazon-ebs.ubuntu-24.04-arm64: Running GOSS validate command: cd /tmp/goss && sudo /tmp/goss-0.3.16-linux-arm64 --gossfile goss/goss.yaml --vars /tmp/goss/goss-vars.yaml --vars-inline '{"ARCH":"arm64","OS":"ubuntu","OS_VERSION":"24.04","PROVIDER":"amazon","containerd_version":"1.7.13","kubernetes_cni_deb_version":"","kubernetes_cni_rpm_version":"","kubernetes_cni_source_type":"pkg","kubernetes_cni_version":"1.2.0","kubernetes_deb_version":"1.29.7-1.1","kubernetes_rpm_version":"1.29.7","kubernetes_source_type":"pkg","kubernetes_version":"1.31.0"}' validate --retry-timeout 0s --sleep 1s -f json -o pretty
-==> amazon-ebs.ubuntu-24.04-arm64: /tmp/goss-0.3.16-linux-arm64: 1: Not: not found
-==> amazon-ebs.ubuntu-24.04-arm64: Goss validate failed
-==> amazon-ebs.ubuntu-24.04-arm64: Inspect mode on : proceeding without failing Packer
-```
+    > For me : `ami-` is the AMI for Kubernetes v1.28.0 and `ami-` is the AMI for Kubernetes v1.31.0.
 
 ## Provisioning a cluster
 

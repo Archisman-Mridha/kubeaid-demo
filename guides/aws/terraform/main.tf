@@ -9,12 +9,6 @@ resource "aws_internet_gateway" "default" {
   vpc_id = aws_vpc.default.id
 }
 
-resource "aws_eip" "default" {
-  depends_on = [
-    aws_internet_gateway.default
-  ]
-}
-
 resource "aws_subnet" "public_subnet" {
   vpc_id     = aws_vpc.default.id
   cidr_block = cidrsubnet(local.vpc_cidr, 1, 1)
