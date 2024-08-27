@@ -36,8 +36,6 @@
 
     You can view the AMI ID somewhere in the output.
 
-    > For me : `ami-` is the AMI for Kubernetes v1.28.0 and `ami-` is the AMI for Kubernetes v1.31.0.
-
 ## Provisioning a cluster
 
 Fork the [KubeAid](https://github.com/Obmondo/kubeaid) and [KubeAid config](https://github.com/Obmondo/kubeaid-config) repos. Here are my forks - https://github.com/Archisman-Mridha/kubeaid and https://github.com/Archisman-Mridha/kubeaid-config.
@@ -115,7 +113,7 @@ And done....!
 
 ## Upgrading the cluster
 
-You'll notice currently we're running Kubernetes v1.28.0. We'll be upgrading the Kubernetes version to v1.31.0.
+You'll notice currently we're running Kubernetes v1.29.0. We'll be upgrading the Kubernetes version to v1.31.0.
 
 - Change the Kubernetes version to `v1.31.0` and AMI id to `ami-07363ceb2bd8ec795` in`k8s/test.cluster.com/argocd-apps/values-capi-cluster.yaml`in your`kubeaid-config` fork. Commit and push that change.
 
@@ -166,3 +164,5 @@ and checking the `Kubernetes server version`.
 - [Building Images for AWS](https://image-builder.sigs.k8s.io/capi/providers/aws.html)
 
 - [AARCH64 / ARM64 CAPI image build for Ubuntu 22.04](https://github.com/kubernetes-sigs/image-builder/pull/1142)
+
+- [What are SSH Host Keys?](https://www.ssh.com/academy/ssh/host-key)
