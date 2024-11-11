@@ -24,7 +24,7 @@
 
 3.  We'll be using `image-builder/images/capi/packer/ami/packer.json` along with `image-builder/images/capi/packer/ami/ubuntu-2404-arm64.json`. You can adjust the `image-builder/images/capi/packer/ami/ubuntu-2404-arm64.json` file according to your needs.
 
-    For example, if you want to publicly share the AMI, then set `ami_groups: all` in `image-builder/images/capi/packer/ami/ubuntu-2404-arm64.json`.
+    For example, if you want to publicly share the AMI, then set `ami_groups: all` and `snapshot_groups: all` in `image-builder/images/capi/packer/ami/ubuntu-2404-arm64.json`.
 
     > To publicly share the image, you must call the DisableImageBlockPublicAccess API.
 
@@ -166,3 +166,11 @@ and checking the `Kubernetes server version`.
 - [AARCH64 / ARM64 CAPI image build for Ubuntu 22.04](https://github.com/kubernetes-sigs/image-builder/pull/1142)
 
 - [What are SSH Host Keys?](https://www.ssh.com/academy/ssh/host-key)
+
+
+## Bug dumps
+
+CAPI system logs :
+```log
+Object capi-cluster-kubeaid-demo/test.cluster.com is already owned by another MachinePool controller test.cluster.com-primary" controller="machinepool" controllerGroup="cluster.x-k8s.io" controllerKind="MachinePool" MachinePool="capi-cluster-kubeaid-demo/test.cluster.com-secondary" namespace="capi-cluster-kubeaid-demo" name="test.cluster.com-secondary"
+```

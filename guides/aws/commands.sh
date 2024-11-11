@@ -2,7 +2,8 @@
 
 # Create temporary local K3s management cluster.
 k3d cluster create management \
-  --servers 1 --agents 2
+        --servers 1 --agents 2 \
+        --image rancher/k3s:v1.31.1-k3s1
 
 # Install cert manager
 kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.15.0/cert-manager.yaml
@@ -10,8 +11,8 @@ kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/
 # Install ArgoCD.
 helm repo add argo https://argoproj.github.io/argo-helm
 helm install argo-cd argo/argo-cd \
-  --namespace argo-cd --create-namespace \
-  --set notification.enabled=false --set dex.enabled=false
+        --namespace argo-cd --create-namespace \
+        --set notification.enabled=false --set dex.enabled=false
 
 # Install clusterawsadm.
 wget https://github.com/kubernetes-sigs/cluster-api-provider-aws/releases/download/v2.5.2/clusterawsadm_v2.5.2_linux_amd64
@@ -21,29 +22,29 @@ sudo chmod +x /usr/local/bin/clusterawsadm
 # Create Kubernetes Secret required by the AWS Infrastructure Provider (CAPA Controller Manager). It
 # should exist in the same namespace where the AWS Infrastructure Provider will be deployed.
 
-  # You must have your AWS credentials exported as environment variables.
-  # export CUSTOMERID=
-  # export AWS_REGION=
-  # export AWS_ACCESS_KEY_ID=
-  # export AWS_SECRET_ACCESS_KEY=
+# You must have your AWS credentials exported as environment variables.
+# export CUSTOMERID=
+# export AWS_REGION=
+# export AWS_ACCESS_KEY_ID=
+# export AWS_SECRET_ACCESS_KEY=
 
-	# The clusterawsadm utility takes the credentials that you set as environment variables and uses
-	# them to create a CloudFormation stack in your AWS account with the correct IAM resources.
-	# NOTE : This requires admin privileges.
-	clusterawsadm bootstrap iam create-cloudformation-stack
+# The clusterawsadm utility takes the credentials that you set as environment variables and uses
+# them to create a CloudFormation stack in your AWS account with the correct IAM resources.
+# NOTE : This requires admin privileges.
+clusterawsadm bootstrap iam create-cloudformation-stack
 
-  export AWS_B64ENCODED_CREDENTIALS=$(clusterawsadm bootstrap credentials encode-as-profile)
+export AWS_B64ENCODED_CREDENTIALS=$(clusterawsadm bootstrap credentials encode-as-profile)
 
-  kubectl create namespace capi-cluster-kubeaid-demo
+kubectl create namespace capi-cluster-kubeaid-demo
 
-  kubectl create secret generic capi-cluster-token \
-    --dry-run=client \
-    --namespace capi-cluster-kubeaid-demo \
-    --from-literal=AWS_B64ENCODED_CREDENTIALS=${AWS_B64ENCODED_CREDENTIALS} \
-    -o yaml \
-  > ./management-cluster/capi-cluster-token.secret.yaml
+kubectl create secret generic capi-cluster-token \
+        --dry-run=client \
+        --namespace capi-cluster-kubeaid-demo \
+        --from-literal=AWS_B64ENCODED_CREDENTIALS=${AWS_B64ENCODED_CREDENTIALS} \
+        -o yaml \
+        >./management-cluster/capi-cluster-token.secret.yaml
 
-  kubectl apply -f ./management-cluster/capi-cluster-token.secret.yaml
+kubectl apply -f ./management-cluster/capi-cluster-token.secret.yaml
 
 # Installing Cluster API :
 #
@@ -75,4 +76,4 @@ sudo install -o root -g root -m 0755 clusterctl /usr/local/bin/clusterctl
 
 # Get kubeconfig of the provisioned cluster.
 mkdir -p ./main-cluster
-clusterctl get kubeconfig test.cluster.com -n capi-cluster-kubeaid-demo > ./main-cluster/kubeconfig.yaml
+clusterctl get kubeconfig test.cluster.com -n capi-cluster-kubeaid-demo >./main-cluster/kubeconfig.yaml

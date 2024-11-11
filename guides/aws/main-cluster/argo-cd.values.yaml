@@ -1,0 +1,6 @@
+configs:
+  repositories:
+    kubeaid-repo:
+      name: kubeaid
+      type: git
+      url: https://github.com/Archisman-Mridha/kubeaid.git
